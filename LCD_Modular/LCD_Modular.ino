@@ -1,5 +1,6 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <Arduino.h>
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
@@ -107,13 +108,17 @@ bool latch_status = false;
 int latch_button = -1;
 
 Line line[3];
+char numeric_array_intermediate[] = {'0', '1', '2', '3', '4', '5', '6','7', '8', '9'};
+char numeric_array_begin[] = {' ', '1', '2', '3', '4', '5', '6','7', '8', '9'};
 
 void setup()
 {
 
   line[0].initialize_line("  Kp   : 12345.06789");
-  line[1].initialize_line("  Ti(s): 12345.06789");
-  line[2].initialize_line("  Td(s): 12345.06789");
+  line[1].initialize_line("  Ki   : 12345.06789");
+  line[2].initialize_line("  Kd   : 12345.06789");
+  // line[1].initialize_line("  Ti(s): 12345.06789");
+  // line[2].initialize_line("  Td(s): 12345.06789");
   line[0].select_line();
   lcd.init();
   lcd.init();
@@ -279,6 +284,6 @@ void loop()
 
   memset(button_press, 0, sizeof(button_press));
   memcpy(previous_input, current_input, sizeof(current_input));
-
+  
   // delay(10);
 }

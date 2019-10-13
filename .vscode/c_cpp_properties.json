@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "/Users/prasenjitchandra/Downloads/Arduino.app/Contents/Java/tools/**",
+                "/Users/prasenjitchandra/Downloads/Arduino.app/Contents/Java/hardware/arduino/avr/**",
+                "/Users/prasenjitchandra/Downloads/Arduino.app/Contents/Java/libraries/LiquidCrystal_I2C",
+                "/Users/prasenjitchandra/Downloads/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/src"
+            ],
+            "forcedInclude": [
+                "/Users/prasenjitchandra/Downloads/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h"
+            ],
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
+            "intelliSenseMode": "clang-x64",
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
