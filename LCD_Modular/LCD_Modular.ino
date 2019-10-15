@@ -1,6 +1,9 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <Arduino.h>
+#include "stdlib.h"
+// #include "ArduinoSTL.h"
+// #include <algorithm>
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
@@ -12,26 +15,29 @@ class Line {
     int lower_limit;
     int upper_limit;
     bool enable;
-    String front;
-    String back;
+    // String front;
+    // String back;
+    char numeric_array_intermediate[10] = {'0', '1', '2', '3', '4', '5', '6','7', '8', '9'};
+    char numeric_array_begin[10] = {' ', '1', '2', '3', '4', '5', '6','7', '8', '9'};
+    long unsigned int most_significant_number = 4;
 
     void initialize_line(String init_line) {
       line = init_line;
       cursor_position = 13;
       // decimal_position = line.find('.');
 
-      for (int i = 0; i < decimal_position; i++) {
-        if (isdigit(line[i])) {
-          lower_limit = i;
-          break;
-        }
-      }
+      // for (int i = 0; i < decimal_position; i++) {
+      //   if (isdigit(line[i])) {
+      //     lower_limit = i;
+      //     break;
+      //   }
+      // }
 
       decimal_position = 14;
-      // lower_limit = 9;
+      lower_limit = 9;
       upper_limit = 19;
-      front = " 123456789";
-      back =  "0123456789";
+      // front = " 123456789";
+      // back =  "0123456789";
     }
 
     void select_line() {
@@ -45,7 +51,12 @@ class Line {
     }
 
     void clear_number() {
-
+      for(int sub_char = lower_limit; sub_char <= upper_limit; sub_char++)
+      {
+        if (sub_char != decimal_position) {
+          line[sub_char] = '0';
+        }
+      }
     }
 
     int get_cursor_position() {
@@ -67,16 +78,53 @@ class Line {
     }
 
     void increment_digit() {
-
+      int old_digit = line[cursor_position] - '0';
+      line[cursor_position] = numeric_array_intermediate[(old_digit + 1) % 10];
     }
 
     void decrement_digit() {
-
+      int old_digit = line[cursor_position] - '0';
+      line[cursor_position] = numeric_array_intermediate[(old_digit + 9) % 10];
     }
+
+    void encode_string() {
+      for(int sub_char = lower_limit; sub_char < decimal_position - 1; sub_char++)
+      {
+        if (line[sub_char] == ' ')
+        {
+          line[sub_char] = '0';
+        }
+      }
+    }
+
+    void decode_string() {
+      for(int sub_char = lower_limit; sub_char < decimal_position - 1; sub_char++)
+      {
+        if (line[sub_char] == '0')
+        {
+          line[sub_char] = ' ';
+        }
+        else {
+          break;
+        }
+      }
+    }
+
+    double get_parameter_value () {
+      String parameter_string_before_decimal = line.substring(lower_limit, decimal_position);
+      String parameter_string_after_decimal = line.substring(decimal_position + 1, upper_limit + 1);
+      // return parameter_string.toFloat();
+      Serial.println(parameter_string_before_decimal);
+      Serial.println(parameter_string_after_decimal);
+      double faltu = atoi(parameter_string_before_decimal.c_str()) + 0.00001*atoi(parameter_string_after_decimal.c_str());
+      return faltu;
+    }  
 };
 
 // LCD Parameters
-String line3 = "  SET RUN AUTO PID  ";
+String line3    = " V WARN SET MAN PID ";
+// String line3    = " V WARN SET MAN PID ";
+// String line3 = "  SET RUN AUTO PID  ";
 String modifiedLine = "";
 unsigned long startTime = 0;
 bool visited[4] = {false};
@@ -108,15 +156,13 @@ bool latch_status = false;
 int latch_button = -1;
 
 Line line[3];
-char numeric_array_intermediate[] = {'0', '1', '2', '3', '4', '5', '6','7', '8', '9'};
-char numeric_array_begin[] = {' ', '1', '2', '3', '4', '5', '6','7', '8', '9'};
 
 void setup()
 {
 
-  line[0].initialize_line("  Kp   : 12345.06789");
-  line[1].initialize_line("  Ki   : 12345.06789");
-  line[2].initialize_line("  Kd   : 12345.06789");
+  line[0].initialize_line("  Kp   : 00001.00000");
+  line[1].initialize_line("  Ki   : 00001.00000");
+  line[2].initialize_line("  Kd   : 00001.00000");
   // line[1].initialize_line("  Ti(s): 12345.06789");
   // line[2].initialize_line("  Td(s): 12345.06789");
   line[0].select_line();
@@ -193,10 +239,18 @@ void loop()
   else if (button_press[2] == 1)
   {
     Serial.println("Button pressed = DOWN");
+    if (!run_status)
+    {
+      line[lineNum].decrement_digit();
+    }
   }
   else if (button_press[3] == 1)
   {
     Serial.println("Button pressed = UP");
+    if (!run_status)
+    {
+      line[lineNum].increment_digit();
+    }
   }
   else if (button_press[4] == 1)
   {
@@ -223,16 +277,43 @@ void loop()
     if (!run_status)
     {
       line[lineNum].select_line();
+      line[0].encode_string();
+      line[1].encode_string();
+      line[2].encode_string();
+
+      lcd.setCursor(0, 0);
+      lcd.print(line[0].line);
+      lcd.setCursor(0, 1);
+      lcd.print(line[1].line);
+      lcd.setCursor(0, 2);
+      lcd.print(line[2].line);
     }
     else
     {
       line[lineNum].deselect_line();
+      line[0].decode_string();
+      line[1].decode_string();
+      line[2].decode_string();
+
+      lcd.setCursor(0, 0);
+      lcd.print(line[0].line);
+      lcd.setCursor(0, 1);
+      lcd.print(line[1].line);
+      lcd.setCursor(0, 2);
+      lcd.print(line[2].line);
+
+      Serial.println(line[0].get_parameter_value(), 5);
+      Serial.println(line[1].get_parameter_value(), 5);
+      Serial.println(line[2].get_parameter_value(), 5);
     }
 
   }
   else if (button_press[6] == 1)
   {
     Serial.println("Button pressed = CLEAR");
+    if (!run_status) {
+      line[lineNum].clear_number();
+    }
   }
   else if (button_press[7] == 1)
   {
