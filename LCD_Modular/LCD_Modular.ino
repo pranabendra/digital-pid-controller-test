@@ -123,6 +123,8 @@ class Line {
 
 // LCD Parameters
 String line3    = " V WARN SET MAN PID ";
+String setPointString = "SET POINT  =       V";
+String feedbackString = "FEED BACK  =       V";
 // String line3    = " V WARN SET MAN PID ";
 // String line3 = "  SET RUN AUTO PID  ";
 String modifiedLine = "";
@@ -144,6 +146,13 @@ const int select_parameter = 47;
 const int set_run = 49;
 const int clear_digit = 51;
 const int auto_set = 53;
+
+// Voltage Measurement
+const int input_signal = A0;
+const int toggle_display = 22;
+float input_signal_value;
+String input_signal_MSB;
+String input_signal_LSB;
 
 int previous_input[8];
 int current_input[8] = {0};
@@ -187,6 +196,9 @@ void setup()
   pinMode(set_run, INPUT);
   pinMode(clear_digit, INPUT);
   pinMode(auto_set, INPUT);
+
+  pinMode(input_signal, INPUT);
+  pinMode(toggle_display, INPUT);
 
   Serial.begin(9600);
 }
@@ -355,9 +367,12 @@ void loop()
     }
     else
     {
-      lcd.setCursor(0, lineNum);
-      lcd.print(line[lineNum].line);
-      Serial.println(line[lineNum].line);
+      if (digitalRead(toggle_display) == LOW || !run_status)
+      {
+        lcd.setCursor(0, lineNum);
+        lcd.print(line[lineNum].line);
+        Serial.println(line[lineNum].line);
+      }
     }
   }
 
@@ -365,6 +380,40 @@ void loop()
 
   memset(button_press, 0, sizeof(button_press));
   memcpy(previous_input, current_input, sizeof(current_input));
+
+  
+  input_signal_value = (analogRead(input_signal)*5.0)/1024.0;
+  // Serial.println(input_signal_value);
+  if (round(input_signal_value) <= 10) {
+    input_signal_MSB = " " + String(int(input_signal_value));
+  } 
+  else {
+    input_signal_MSB = String(int(input_signal_value));
+  }
+  input_signal_LSB = String(round(100*(input_signal_value - int(input_signal_value))));
+  Serial.println(toggle_display);
+  if (digitalRead(toggle_display) == HIGH && run_status) {
+      lcd.setCursor(0, 0);
+      lcd.print("SET POINT  = " + input_signal_MSB + "." + input_signal_LSB + " V");
+      lcd.setCursor(0, 1);
+      lcd.print("                    ");
+      lcd.setCursor(0, 2);
+      lcd.print(setPointString);
+      lcd.setCursor(0, 3);
+      lcd.print("                    ");
+  }
+  else if (digitalRead(toggle_display) == LOW && run_status) {
+      lcd.setCursor(0, 0);
+      lcd.print(line[0].line);
+      lcd.setCursor(0, 1);
+      lcd.print(line[1].line);
+      lcd.setCursor(0, 2);
+      lcd.print(line[2].line);
+      lcd.setCursor(0, 3);
+      lcd.print(line3);
+  }
+  delay(10);
+
   
   // delay(10);
 }
